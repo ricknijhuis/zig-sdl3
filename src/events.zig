@@ -20,7 +20,7 @@ const video = @import("video.zig");
 ///
 /// ## Version
 /// This enum is available since SDL 3.2.0.
-pub const Action = enum(c_uint) {
+pub const Action = enum(c.SDL_EventAction) {
     /// Add events to the back of the queue.
     add,
     /// Check but don't remove events from the queue front.
@@ -547,7 +547,10 @@ pub const Clipboard = struct {
         return .{
             .common = Common.fromSdl(val),
             .owner = val.clipboard.owner,
-            .mime_types = @as([*][*:0]const u8, @ptrCast(val.clipboard.mime_types))[0..@intCast(val.clipboard.num_mime_types)],
+            .mime_types = if (val.clipboard.mime_types) |mimes|
+                @as([*][*:0]const u8, @ptrCast(mimes))[0..@intCast(val.clipboard.num_mime_types)]
+            else
+                &[_][*:0]const u8{},
         };
     }
 
@@ -621,7 +624,7 @@ pub const DisplayOrientation = struct {
     /// The associated display.
     display: video.Display,
     /// The new display orientation.
-    orientation: video.DisplayOrientation,
+    orientation: video.Display.Orientation,
 
     /// Convert from SDL.
     pub fn fromSdl(val: c.SDL_Event) DisplayOrientation {

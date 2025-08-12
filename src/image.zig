@@ -1,5 +1,3 @@
-// This file was generated using `zig build bindings`. Do not manually edit!
-
 const c = @import("c");
 const errors = @import("errors.zig");
 const io_stream = @import("io_stream.zig");
@@ -732,7 +730,7 @@ pub fn loadFile(
     const ret = c.IMG_Load(
         path,
     );
-    return surface.Surface{ .value = try errors.wrapNull(*c.SDL_Surface, ret) };
+    return surface.Surface{ .value = try errors.wrapCallNull(*c.SDL_Surface, ret) };
 }
 
 /// Load an image from an SDL data source into a software surface.
@@ -777,7 +775,7 @@ pub fn loadIo(
         src.value,
         close_when_done,
     );
-    return surface.Surface{ .value = try errors.wrapNull(*c.SDL_Surface, ret) };
+    return surface.Surface{ .value = try errors.wrapCallNull(*c.SDL_Surface, ret) };
 }
 
 /// SDL image version information.

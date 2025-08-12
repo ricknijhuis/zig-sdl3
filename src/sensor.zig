@@ -53,7 +53,7 @@ pub const gravity: f32 = c.SDL_STANDARD_GRAVITY;
 ///
 /// ## Version
 /// This enum is available since SDL 3.2.0.
-pub const Type = enum(c_int) {
+pub const Type = enum(c.SDL_SensorType) {
     /// Unknown sensor type.
     unknown = c.SDL_SENSOR_UNKNOWN,
     /// Accelerometer.
@@ -112,7 +112,7 @@ pub const Id = packed struct {
         const ret = c.SDL_GetSensorFromID(
             self.value,
         );
-        return Sensor{ .value = try errors.wrapNull(*c.SDL_Sensor, ret) };
+        return Sensor{ .value = try errors.wrapCallNull(*c.SDL_Sensor, ret) };
     }
 
     /// Get the implementation dependent name of a sensor.
@@ -339,7 +339,7 @@ pub const Sensor = packed struct {
         const ret = c.SDL_OpenSensor(
             id.value,
         );
-        return Sensor{ .value = try errors.wrapNull(*c.SDL_Sensor, ret) };
+        return Sensor{ .value = try errors.wrapCallNull(*c.SDL_Sensor, ret) };
     }
 };
 

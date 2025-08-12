@@ -25,6 +25,7 @@ const log_app = sdl3.log.Category.application;
 
 /// Sample structure to use to hold our app state.
 const AppState = struct {
+    frame_capper: sdl3.extras.FramerateCapper(f32),
     window: sdl3.video.Window,
     renderer: sdl3.render.Renderer,
     tree_tex: sdl3.render.Texture,
@@ -133,7 +134,7 @@ pub fn init(
     errdefer window_renderer.renderer.deinit();
     errdefer window_renderer.window.deinit();
     var frame_capper = sdl3.extras.FramerateCapper(f32){ .mode = .{ .unlimited = {} } };
-    window_renderer.renderer.setVSync(.{ .adaptive = {} }) catch {
+    window_renderer.renderer.setVSync(.{ .on_each_num_refresh = 1 }) catch {
 
         // We don't want to run at unlimited FPS, cap frame rate to the default FPS if vsync is not available so we don't burn CPU time.
         frame_capper.mode = .{ .limited = fps };
@@ -146,11 +147,12 @@ pub fn init(
     errdefer tree_tex.deinit();
 
     // Prove error handling works.
-    const dummy: ?sdl3.video.Window = sdl3.video.Window.fromID(99999) catch null;
+    const dummy: ?sdl3.video.Window = sdl3.video.Window.fromId(99999) catch null;
     _ = dummy;
 
     // Set app state.
     state.* = .{
+        .frame_capper = frame_capper,
         .window = window_renderer.window,
         .renderer = window_renderer.renderer,
         .tree_tex = tree_tex,
@@ -176,7 +178,11 @@ pub fn init(
 pub fn iterate(
     app_state: *AppState,
 ) !sdl3.AppResult {
-    try app_state.renderer.setDrawColor(.{ .r = 128, .g = 30, .b = 255 });
+    const dt = app_state.frame_capper.delay();
+    _ = dt; // We don't need dt for this example, but might be useful to you.
+
+    // Draw main scene.
+    try app_state.renderer.setDrawColor(.{ .r = 128, .g = 30, .b = 255, .a = 255 });
     try app_state.renderer.clear();
     const border = 10;
     try app_state.renderer.renderTexture(app_state.tree_tex, null, .{

@@ -23,7 +23,7 @@ pub const PermissionState = enum(c_int) {
 ///
 /// ## Version
 /// This enum is available since SDL 3.2.0.
-pub const Position = enum(c_uint) {
+pub const Position = enum(c.SDL_CameraPosition) {
     front_facing = c.SDL_CAMERA_POSITION_FRONT_FACING,
     back_facing = c.SDL_CAMERA_POSITION_BACK_FACING,
 };
@@ -41,26 +41,6 @@ pub const Id = packed struct {
     // Size tests.
     comptime {
         std.debug.assert(@sizeOf(c.SDL_CameraID) == @sizeOf(Id));
-    }
-
-    /// Get a list of currently connected camera devices.
-    ///
-    /// ## Return Value
-    /// Returns a slice of IDs terminated by 0.
-    /// This needs to be freed with `free()`.
-    ///
-    /// ## Thread Safety
-    /// It is safe to call this function from any thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn getAll() ![]Id {
-        var count: c_int = undefined;
-        const val = c.SDL_GetCameras(
-            &count,
-        );
-        const ret = try errors.wrapCallCPtr(c.SDL_CameraID, val);
-        return @as([*]Id, @ptrCast(ret))[0..@intCast(count)];
     }
 
     /// Get the human-readable device name for a camera.
@@ -277,7 +257,7 @@ pub const Camera = packed struct {
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
-    pub fn getID(
+    pub fn getId(
         self: Camera,
     ) !Id {
         const ret = c.SDL_GetCameraID(
@@ -443,8 +423,8 @@ pub const Specification = struct {
     /// Convert from an SDL value.
     pub fn fromSdl(data: c.SDL_CameraSpec) Specification {
         return .{
-            .format = if (data.format == c.SDL_PIXELFORMAT_UNKNOWN) null else pixels.Format{ .value = data.format },
-            .colorspace = if (data.colorspace == c.SDL_COLORSPACE_UNKNOWN) null else pixels.Colorspace{ .value = data.colorspace },
+            .format = if (data.format == c.SDL_PIXELFORMAT_UNKNOWN) null else @enumFromInt(data.format),
+            .colorspace = if (data.colorspace == c.SDL_COLORSPACE_UNKNOWN) null else @enumFromInt(data.colorspace),
             .width = @intCast(data.width),
             .height = @intCast(data.height),
             .framerate_numerator = @intCast(data.framerate_numerator),
@@ -455,8 +435,8 @@ pub const Specification = struct {
     /// Convert to an SDL value.
     pub fn toSdl(self: Specification) c.SDL_CameraSpec {
         return .{
-            .format = if (self.format) |val| val.value else c.SDL_PIXELFORMAT_UNKNOWN,
-            .colorspace = if (self.colorspace) |val| val.value else c.SDL_COLORSPACE_UNKNOWN,
+            .format = if (self.format) |val| @intFromEnum(val) else c.SDL_PIXELFORMAT_UNKNOWN,
+            .colorspace = if (self.colorspace) |val| @intFromEnum(val) else c.SDL_COLORSPACE_UNKNOWN,
             .width = @intCast(self.width),
             .height = @intCast(self.height),
             .framerate_numerator = @intCast(self.framerate_numerator),
@@ -464,6 +444,26 @@ pub const Specification = struct {
         };
     }
 };
+
+/// Get a list of currently connected camera devices.
+///
+/// ## Return Value
+/// Returns a slice of IDs terminated by 0.
+/// This needs to be freed with `free()`.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getCameras() ![]Id {
+    var count: c_int = undefined;
+    const val = c.SDL_GetCameras(
+        &count,
+    );
+    const ret = try errors.wrapCallCPtr(c.SDL_CameraID, val);
+    return @as([*]Id, @ptrCast(ret))[0..@intCast(count)];
+}
 
 /// Get the name of the current camera driver.
 ///
@@ -552,7 +552,7 @@ test "Camera" {
     _ = getCurrentDriverName();
 
     // ID functions.
-    const ids_raw: ?[]Id = Id.getAll() catch null;
+    const ids_raw: ?[]Id = getCameras() catch null;
     if (ids_raw) |ids| {
         defer sdl3.free(ids.ptr);
         for (ids) |id| {
@@ -567,7 +567,7 @@ test "Camera" {
             const cam_raw: ?Camera = Camera.init(id, null) catch null;
             if (cam_raw) |cam| {
                 defer cam.deinit();
-                _ = cam.getID() catch {};
+                _ = cam.getId() catch {};
                 _ = cam.getFormat() catch {};
                 _ = cam.getPermissionState();
                 _ = cam.getProperties() catch {};
