@@ -2978,7 +2978,7 @@ pub fn flushGroup(
 pub fn getFilter() ?struct { FilterC, ?*anyopaque } {
     var event_filter: c.SDL_FunctionPointer = undefined;
     var user_data: ?*anyopaque = undefined;
-    const ret = c.SDL_GetEventFilter(&event_filter, &user_data);
+    const ret = c.SDL_GetEventFilter(@ptrCast(&event_filter), &user_data);
     if (!ret)
         return null;
     return .{ @ptrCast(event_filter), user_data };

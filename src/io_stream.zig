@@ -1359,7 +1359,7 @@ pub const Stream = struct {
     pub const Reader = struct {
         stream: Stream,
         err: ?Error = null,
-        interface: std.io.Reader,
+        interface: std.Io.Reader,
 
         pub fn init(stream: Stream, buffer: []u8) Reader {
             return .{
@@ -1373,7 +1373,7 @@ pub const Stream = struct {
             };
         }
 
-        fn streamFn(r: *std.io.Reader, w: *std.io.Writer, limit: std.io.Limit) std.io.Reader.StreamError!usize {
+        fn streamFn(r: *std.Io.Reader, w: *std.Io.Writer, limit: std.Io.Limit) std.Io.Reader.StreamError!usize {
             const self: *@This() = @alignCast(@fieldParentPtr("interface", r));
             const dest = limit.slice(try w.writableSliceGreedy(1));
             const bytes_read = self.stream.read(dest) catch |err| {
@@ -1872,7 +1872,7 @@ pub const Stream = struct {
     pub const Writer = struct {
         stream: Stream,
         err: ?Error = null,
-        interface: std.io.Writer,
+        interface: std.Io.Writer,
 
         pub fn init(stream: Stream, buffer: []u8) Writer {
             return .{
@@ -1884,14 +1884,14 @@ pub const Stream = struct {
             };
         }
 
-        fn doWrite(self: *@This(), buf: []const u8) std.io.Writer.Error!usize {
+        fn doWrite(self: *@This(), buf: []const u8) std.Io.Writer.Error!usize {
             return self.stream.write(buf) catch |err| {
                 self.err = err;
                 return error.WriteFailed;
             };
         }
 
-        fn drainFn(w: *std.io.Writer, data: []const []const u8, splat: usize) std.io.Writer.Error!usize {
+        fn drainFn(w: *std.Io.Writer, data: []const []const u8, splat: usize) std.Io.Writer.Error!usize {
             const self: *@This() = @alignCast(@fieldParentPtr("interface", w));
             var written_total: usize = 0;
 
